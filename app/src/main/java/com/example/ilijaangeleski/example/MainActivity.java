@@ -1,12 +1,18 @@
 package com.example.ilijaangeleski.example;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,17 +39,31 @@ public class MainActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     private static final int progress_bar_type = 0;
     private static String downloadURL = "http://www.noiseaddicts.com/samples_1w72b820/2541.mp3";
+    private static final String TAG = MainActivity.class.getName();
+    private static final int MY_REQUEST_PERMISSION=0;
+    private boolean permissionGranted=false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        downloadBtn = (Button) findViewById(R.id.downloadBtn);
-            downloadBtn.setOnClickListener(new View.OnClickListener() {
+        if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    MY_REQUEST_PERMISSION);
+        }
 
+
+        downloadBtn = (Button) findViewById(R.id.downloadBtn);
+        downloadBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    onDownloadPressed();
+                    if(permissionGranted){
+                        onDownloadPressed();
+                    }
+
                 }
             });
     }
@@ -55,6 +75,21 @@ public class MainActivity extends AppCompatActivity {
             return true;
         } else {
             return false;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode){
+            case MY_REQUEST_PERMISSION:
+                if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    permissionGranted=true;
+                }else{
+                    permissionGranted=false;
+                    Toast.makeText(getApplicationContext(),"This app requeires external storage permission",Toast.LENGTH_LONG).show();
+                }
+                break;
         }
     }
 
@@ -168,5 +203,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(activity.getApplicationContext(), "Download complete!", Toast.LENGTH_LONG).show();
             }
         }
+
+
     }
 }
